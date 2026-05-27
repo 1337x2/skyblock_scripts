@@ -10,11 +10,17 @@ from minescript import (
 	player,
 	player_press_forward,
 	player_press_backward,
+	player_press_sneak,
 )
 
 RUN_FILE = Path(__file__).with_suffix(".running")
 STRAFE_STABLE_MIN = 1
 STRAFE_STABLE_MAX = 1.1
+
+def sneak():
+	player_press_sneak(True)
+	time.sleep(0.1)
+	player_press_sneak(False)
 
 def start_loop() -> None:
 	RUN_FILE.write_text("running", encoding="utf-8")
@@ -56,6 +62,7 @@ def start_loop() -> None:
 							player_press_forward(False)
 							player_press_backward(True)
 							strafing_left = False
+							sneak()
 						else:
 							player_press_backward(False)
 							player_press_forward(True)
