@@ -10,6 +10,8 @@ from minescript import (
 	player,
 	player_press_forward,
 	player_press_backward,
+	player_press_left,
+	player_press_right,
 )
 
 RUN_FILE = Path(__file__).with_suffix(".running")
@@ -22,8 +24,9 @@ def start_loop() -> None:
 
 	# Movement state: always hold forward, alternate left/right strafing
 	strafing_left = True
-	player_press_forward(False)
-	player_press_backward(True)
+	player_press_forward(True)
+	player_press_left(True)
+	player_press_right(False)
 	player_press_attack(True)
 
 	# Z-block tracking for strafing switch
@@ -53,12 +56,12 @@ def start_loop() -> None:
 					if (now - last_z_stable_time) >= next_stable_threshold:
 						# switch strafing side
 						if strafing_left:
-							player_press_forward(False)
-							player_press_backward(True)
+							player_press_right(False)
+							player_press_left(True)
 							strafing_left = False
 						else:
-							player_press_backward(False)
-							player_press_forward(True)
+							player_press_right(True)
+							player_press_left(False)
 							strafing_left = True
 
 						# reset stable timer and pick next threshold
@@ -72,6 +75,8 @@ def start_loop() -> None:
 		player_press_attack(False)
 		player_press_forward(False)
 		player_press_backward(False)
+		player_press_left(False)
+		player_press_right(False)
 		if RUN_FILE.exists():
 			RUN_FILE.unlink()
 
@@ -80,6 +85,10 @@ def stop_loop() -> None:
 	if RUN_FILE.exists():
 		RUN_FILE.unlink()
 	player_press_attack(False)
+	player_press_forward(False)
+	player_press_backward(False)
+	player_press_left(False)
+	player_press_right(False)
 	echo("Stop wheat harvesting")
 
 
