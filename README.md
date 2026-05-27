@@ -13,3 +13,11 @@ set script:
 Sugarcane script:
 \sugarcane start
 \sugarcane stop
+
+Wheat script:
+\wheat start
+\wheat stop
+
+Mushroom script:
+\mush start
+\mush stop
