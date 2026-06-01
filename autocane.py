@@ -9,26 +9,56 @@ from minescript import (
 	player_press_attack,
 	player,
 	player_press_forward,
-	player_press_left,
-	player_press_right,
 	player_press_backward,
+	player_press_sneak,
+	chat,
+	player_press_right,
+    player_press_left,
 )
 
 RUN_FILE = Path(__file__).with_suffix(".running")
 STRAFE_STABLE_MIN = 0.2
 STRAFE_STABLE_MAX = 0.5
 
+# Warp target coordinates and trigger radius (in blocks)
+WARP_TARGET = (-141, 71, 142)
+WARP_RADIUS = 2
+WARP_COMMAND = "/warp garden"
+
+
+def sneak():
+	player_press_sneak(True)
+	time.sleep(0.1)
+	player_press_sneak(False)
+
+
+def distance_to_target(pos) -> float:
+	"""Return the 3D Euclidean distance from pos to WARP_TARGET."""
+	dx = pos[0] - WARP_TARGET[0]
+	dy = pos[1] - WARP_TARGET[1]
+	dz = pos[2] - WARP_TARGET[2]
+	return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+
+def stop_movement():
+	"""Release all held keys."""
+	player_press_attack(False)
+	player_press_forward(False)
+	player_press_backward(False)
+	player_press_right(False)
+	player_press_left(False)
+
+
 def start_loop() -> None:
 	RUN_FILE.write_text("running", encoding="utf-8")
-	echo("Start")
+	echo("Start mushroom harvesting")
+	echo(f"Will warp to '{WARP_COMMAND}' when within {WARP_RADIUS} blocks of {WARP_TARGET}")
 
-	# Movement state: always hold forward, alternate left/right strafing
 	strafing_left = True
 	player_press_right(True)
 	player_press_backward(False)
 	player_press_attack(True)
 
-	# Z-block tracking for strafing switch
 	last_z_block = None
 	last_z_stable_time = time.time()
 	next_stable_threshold = random.uniform(STRAFE_STABLE_MIN, STRAFE_STABLE_MAX)
@@ -36,24 +66,28 @@ def start_loop() -> None:
 	try:
 		while RUN_FILE.exists():
 			now = time.time()
-			# ---- Movement handling ----
 			try:
 				p = player()
-				z = float(p.position[2])
+				pos = p.position  # (x, y, z)
+				x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
 			except Exception:
-				z = None
+				x = y = z = None
 
-			if z is not None:
+			if x is not None:
+				# ---- Warp trigger check ----
+				if distance_to_target((x, y, z)) <= WARP_RADIUS:
+					echo(f"Reached warp target {WARP_TARGET} — executing '{WARP_COMMAND}'")
+					chat(WARP_COMMAND)
+					time.sleep(5)  # Wait for warp to complete before resuming movement 		
+
+				# ---- Movement / strafing logic ----
 				z_block = math.floor(z)
 				if last_z_block is None or z_block != last_z_block:
 					last_z_block = z_block
 					last_z_stable_time = now
-					# pick a new threshold for the next stable period
 					next_stable_threshold = random.uniform(STRAFE_STABLE_MIN, STRAFE_STABLE_MAX)
 				else:
-					# still in same z-block
 					if (now - last_z_stable_time) >= next_stable_threshold:
-						# switch strafing side
 						if strafing_left:
 							player_press_right(False)
 							player_press_backward(True)
@@ -63,19 +97,13 @@ def start_loop() -> None:
 							player_press_right(True)
 							strafing_left = True
 
-						# reset stable timer and pick next threshold
 						last_z_stable_time = now
-						next_stable_threshold = random.uniform(STRAFE_STABLE_MIN, STRAFE_STABLE_MAX)	
-									
+						next_stable_threshold = random.uniform(STRAFE_STABLE_MIN, STRAFE_STABLE_MAX)
+
 			time.sleep(0.01)
-			
+
 	finally:
-		# cleanup: release keys
-		player_press_attack(False)
-		player_press_forward(False)
-		player_press_left(False)
-		player_press_right(False)
-		player_press_backward(False)
+		stop_movement()
 		if RUN_FILE.exists():
 			RUN_FILE.unlink()
 
@@ -84,7 +112,7 @@ def stop_loop() -> None:
 	if RUN_FILE.exists():
 		RUN_FILE.unlink()
 	player_press_attack(False)
-	echo("Stop")
+	echo("Stop mushroom harvesting")
 
 
 def main() -> None:
@@ -92,7 +120,7 @@ def main() -> None:
 
 	if action == "start":
 		if RUN_FILE.exists():
-			echo("laeuft bereits")
+			echo("Mushroom harvesting is already running")
 			return
 		start_loop()
 		return
@@ -101,7 +129,7 @@ def main() -> None:
 		stop_loop()
 		return
 
-	echo("Benutzung: \\sugarcane start | \\sugarcane stop")
+	echo("Usage: \\mush start | \\mush stop")
 
 
 main()

@@ -14,7 +14,7 @@ def cast_rod():
 	player_press_use(False)
 
 def armor_stand_exists():
-	for entity in entities(nbt=True):
+	for entityt in entities(nbt=True):
 		nbt = getattr(entity, 'nbt', '')
 		if isinstance(nbt, str) and (
 			'CustomName' in nbt and '!!!' in nbt and
@@ -29,7 +29,7 @@ def start_loop() -> None:
 	RUN_FILE.write_text("running", encoding="utf-8")
 	echo("Fishing started")
 	times_reeled_in = 0
-	player_press_backward(True)
+	#player_press_backward(True)
 
 
 	try:
@@ -41,7 +41,7 @@ def start_loop() -> None:
 				cast_rod()
 				time.sleep(cast_repeat_delay)
 				cast_rod()
-			time.sleep(0.5)
+			time.sleep(0.2)
 	finally:
 		if RUN_FILE.exists():
 			RUN_FILE.unlink()

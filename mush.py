@@ -62,6 +62,7 @@ def start_loop() -> None:
 							player_press_forward(False)
 							player_press_backward(True)
 							strafing_left = False
+							time.sleep(4)
 							sneak()
 						else:
 							player_press_backward(False)
